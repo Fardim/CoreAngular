@@ -9,6 +9,7 @@ using DatingApp.API.Data.IRepository;
 using DatingApp.API.Dtos;
 using DatingApp.API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DatingApp.API.Controllers
@@ -17,9 +18,11 @@ namespace DatingApp.API.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthRepository _repo;
-        public AuthController(IAuthRepository repo)
+        public IConfiguration Configuration { get; }
+        public AuthController(IAuthRepository repo, IConfiguration configuration)
         {
             _repo = repo;
+            Configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -47,7 +50,7 @@ namespace DatingApp.API.Controllers
             if (userFromRepo == null)
                 return Unauthorized();
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("super secret key");
+            var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
