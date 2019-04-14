@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using DatingApp.API.Data.IRepository;
 using DatingApp.API.Dtos;
 using DatingApp.API.Models;
@@ -18,9 +19,11 @@ namespace DatingApp.API.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthRepository _repo;
+        private readonly IMapper _mapper;
         public IConfiguration Configuration { get; }
-        public AuthController(IAuthRepository repo, IConfiguration configuration)
+        public AuthController(IAuthRepository repo, IConfiguration configuration, IMapper mapper)
         {
+            _mapper = mapper;
             _repo = repo;
             Configuration = configuration;
         }
@@ -57,7 +60,7 @@ namespace DatingApp.API.Controllers
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
-                    new Claim(ClaimTypes.Name, userFromRepo.Username),
+                    new Claim(ClaimTypes.Name, userFromRepo.Username)
                 }),
                 Expires = DateTime.Now.AddDays(1),
                 SigningCredentials =
@@ -65,7 +68,8 @@ namespace DatingApp.API.Controllers
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
-            return Ok(new { tokenString });
+            var user = _mapper.Map<UserForListDto>(userFromRepo);
+            return Ok(new { tokenString, user });
             
         }
     }
