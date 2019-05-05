@@ -92,7 +92,7 @@ namespace DatingApp.API.Controllers
                 _repo.Add(like);
             }
             if (await _repo.SaveAll())
-                return Ok();
+                return Ok(new {});
             return BadRequest("Failed to save the like");
         }
     }

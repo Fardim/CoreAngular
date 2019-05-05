@@ -26,7 +26,7 @@ namespace DatingApp.API.Helpers
         {
             var totalCount = await source.CountAsync();
             var items = await source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-            return new PagedList<T>(items, totalCount, pageNumber,pageSize);
+            return new PagedList<T>(items, totalCount, pageNumber, pageSize);
         }
     }
 }

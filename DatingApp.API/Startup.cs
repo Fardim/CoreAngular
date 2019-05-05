@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -23,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace DatingApp.API
 {
@@ -39,7 +39,8 @@ namespace DatingApp.API
         public void ConfigureServices(IServiceCollection services)
         {
             var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);
-            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<DataContext>(x => x.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
+            //https://stackoverflow.com/questions/40275195/how-to-setup-automapper-in-asp-net-core
             var mappingConfig = new MapperConfiguration(mc =>
             {
                 mc.AddProfile(new AutoMapperProfile());
@@ -67,7 +68,38 @@ namespace DatingApp.API
             });
             services.AddScoped<LogUserActivity>();
         }
-
+        //public void ConfigureDevelopmentServices(IServiceCollection services)
+        //{
+        //    var key = Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value);
+        //    services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+        //    //services.AddDbContext<DataContext>(x => x.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
+        //    var mappingConfig = new MapperConfiguration(mc =>
+        //    {
+        //        mc.AddProfile(new AutoMapperProfile());
+        //    });
+        //    IMapper mapper = mappingConfig.CreateMapper();
+        //    services.AddSingleton(mapper);
+        //    services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(opt =>
+        //    {
+        //        opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+        //    });
+        //    services.AddTransient<Seed>();
+        //    services.AddCors();
+        //    services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
+        //    services.AddScoped<IAuthRepository, AuthRepository>();
+        //    services.AddScoped<IDatingRepository, DatingRepository>();
+        //    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+        //    {
+        //        options.TokenValidationParameters = new TokenValidationParameters
+        //        {
+        //            ValidateIssuerSigningKey = true,
+        //            IssuerSigningKey = new SymmetricSecurityKey(key),
+        //            ValidateIssuer = false,
+        //            ValidateAudience = false
+        //        };
+        //    });
+        //    services.AddScoped<LogUserActivity>();
+        //}
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
         {
@@ -94,11 +126,19 @@ namespace DatingApp.API
                 //app.UseHsts();
             }
 
-            //seeder.SeedUsers();
+            seeder.SeedUsers();
             app.UseHttpsRedirection();
             app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+            app.UseMvc(routes =>
+            {
+                routes.MapSpaFallbackRoute(
+                    name: "spa-fallback",
+                    defaults: new {controller = "Fallback", action = "Index"}
+                );
+            });
         }
     }
 }
